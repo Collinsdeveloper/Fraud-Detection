@@ -1,120 +1,60 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { getToken, isAuthed } from './api'
+import { Layout } from './components/Layout'
+import { ToastHost } from './components/toast.jsx'
+import { Login } from './pages/Login'
+import { Dashboard } from './pages/Dashboard'
+import { MonitorPage } from './pages/MonitorPage'
+import { AlertsPage } from './pages/AlertsPage'
+import { SubscribersPage } from './pages/SubscribersPage'
+import { RulesPage } from './pages/RulesPage'
+import { SimulatorPage } from './pages/SimulatorPage'
+import { NotificationsPage } from './pages/NotificationsPage'
+
+const routeFromHash = () => {
+  const route = window.location.hash.replace(/^#/, '') || '/'
+  return route.startsWith('/') ? route : `/${route}`
+}
+
+function pageFor(route) {
+  switch (route) {
+    case '/': return <Dashboard />
+    case '/sim-swaps': return <MonitorPage kind="sim-swap" />
+    case '/airtime': return <MonitorPage kind="airtime" />
+    case '/account': return <MonitorPage kind="account" />
+    case '/alerts': return <AlertsPage />
+    case '/subscribers': return <SubscribersPage />
+    case '/rules': return <RulesPage />
+    case '/simulator': return <SimulatorPage />
+    case '/notifications': return <NotificationsPage />
+    default: return <Dashboard />
+  }
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [route, setRoute] = useState(routeFromHash)
+  const [authed, setAuthed] = useState(isAuthed())
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setRoute(routeFromHash())
+      setAuthed(!!getToken())
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  useEffect(() => {
+    if (!authed && route !== '/login') window.location.hash = '#/login'
+    if (authed && route === '/login') window.location.hash = '#/'
+  }, [authed, route])
+
+  if (!authed || route === '/login') return <><Login onLogin={() => setAuthed(true)} /><ToastHost /></>
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <Layout route={route}>{pageFor(route)}</Layout>
+      <ToastHost />
     </>
   )
 }

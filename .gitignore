@@ -1,0 +1,19 @@
+# Local secrets and environment
+.env
+*.env.local
+backend/.env
+
+# Python runtime and caches
+backend/venv/
+backend/__pycache__/
+backend/app/**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime output
+*.log
+/tmp/
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
